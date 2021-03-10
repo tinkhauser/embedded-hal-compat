@@ -4,8 +4,8 @@
 
 #![no_std]
 
-pub use eh0_2 as eh0_2;
-pub use eh1_0 as eh1_0;
+pub use eh0_2;
+pub use eh1_0;
 
 /// Compatibility container object.
 /// This is generic over different E-H types and will provide adaption
@@ -19,7 +19,7 @@ pub trait IntoCompat<T> {
     fn compat(self) -> Compat<T>;
 }
 
-impl <T> IntoCompat<T> for T {
+impl<T> IntoCompat<T> for T {
     /// Create an e-h-c wrapper around and e-h object
     /// Available methods depend on the wrapped type
     fn compat(self) -> Compat<T> {
@@ -27,10 +27,10 @@ impl <T> IntoCompat<T> for T {
     }
 }
 
-impl <T> Compat<T> {
+impl<T> Compat<T> {
     /// Create a new compatibility wrapper object
     pub fn new(inner: T) -> Compat<T> {
-        Compat{ inner }
+        Compat { inner }
     }
 
     /// Fetch a reference to the wrapped object
@@ -56,9 +56,9 @@ impl <T> Compat<T> {
 mod digital {
     use super::Compat;
 
-    impl <T, E> eh1_0::digital::InputPin for Compat<T>
-    where 
-        T: eh0_2::digital::v2::InputPin<Error=E>
+    impl<T, E> eh1_0::digital::InputPin for Compat<T>
+    where
+        T: eh0_2::digital::v2::InputPin<Error = E>,
     {
         type Error = E;
 
@@ -93,12 +93,12 @@ mod digital {
 
 /// Delays (blocking)
 mod delay {
-    use core::convert::Infallible;
     use super::Compat;
+    use core::convert::Infallible;
 
-    impl <T> eh1_0::blocking::delay::DelayMs<u32> for Compat<T>
-    where 
-        T: eh0_2::blocking::delay::DelayMs<u32>
+    impl<T> eh1_0::blocking::delay::DelayMs<u32> for Compat<T>
+    where
+        T: eh0_2::blocking::delay::DelayMs<u32>,
     {
         type Error = Infallible;
 
@@ -108,9 +108,9 @@ mod delay {
         }
     }
 
-    impl <T> eh1_0::blocking::delay::DelayMs<u16> for Compat<T>
-    where 
-        T: eh0_2::blocking::delay::DelayMs<u16>
+    impl<T> eh1_0::blocking::delay::DelayMs<u16> for Compat<T>
+    where
+        T: eh0_2::blocking::delay::DelayMs<u16>,
     {
         type Error = Infallible;
 
@@ -120,9 +120,9 @@ mod delay {
         }
     }
 
-    impl <T> eh1_0::blocking::delay::DelayUs<u32> for Compat<T>
-    where 
-        T: eh0_2::blocking::delay::DelayUs<u32>
+    impl<T> eh1_0::blocking::delay::DelayUs<u32> for Compat<T>
+    where
+        T: eh0_2::blocking::delay::DelayUs<u32>,
     {
         type Error = Infallible;
 
@@ -132,9 +132,9 @@ mod delay {
         }
     }
 
-    impl <T> eh1_0::blocking::delay::DelayUs<u16> for Compat<T>
-    where 
-        T: eh0_2::blocking::delay::DelayUs<u16>
+    impl<T> eh1_0::blocking::delay::DelayUs<u16> for Compat<T>
+    where
+        T: eh0_2::blocking::delay::DelayUs<u16>,
     {
         type Error = Infallible;
 
@@ -149,9 +149,9 @@ mod delay {
 mod spi {
     use super::Compat;
 
-    impl <T, E> eh1_0::blocking::spi::Write<u8> for Compat<T>
+    impl<T, E> eh1_0::blocking::spi::Write<u8> for Compat<T>
     where
-        T: eh0_2::blocking::spi::Write<u8, Error=E>
+        T: eh0_2::blocking::spi::Write<u8, Error = E>,
     {
         type Error = E;
 
@@ -160,9 +160,9 @@ mod spi {
         }
     }
 
-    impl <T, E> eh1_0::blocking::spi::Transfer<u8> for Compat<T>
+    impl<T, E> eh1_0::blocking::spi::Transfer<u8> for Compat<T>
     where
-        T: eh0_2::blocking::spi::Transfer<u8, Error=E>
+        T: eh0_2::blocking::spi::Transfer<u8, Error = E>,
     {
         type Error = E;
 
@@ -171,40 +171,52 @@ mod spi {
         }
     }
 
-    impl <T, E> eh1_0::blocking::spi::WriteIter<u8> for Compat<T>
-    where 
-    T: eh0_2::blocking::spi::WriteIter<u8, Error=E>
+    impl<T, E> eh1_0::blocking::spi::WriteIter<u8> for Compat<T>
+    where
+        T: eh0_2::blocking::spi::WriteIter<u8, Error = E>,
     {
         type Error = E;
 
         fn try_write_iter<WI>(&mut self, words: WI) -> Result<(), Self::Error>
         where
-            WI: IntoIterator<Item = u8> 
+            WI: IntoIterator<Item = u8>,
         {
             self.inner.write_iter(words)
         }
+    }
+    // uses blanket impl
+    // requires underlying device to manage cs
+    impl<T, E> eh1_0::blocking::spi::transactional::Default<u8> for Compat<T>
+    where
+        T: eh0_2::blocking::spi::Transfer<u8, Error = E>,
+        T: eh0_2::blocking::spi::Write<u8, Error = E>,
+    {
     }
 }
 
 // I2C (blocking)
 mod i2c {
-    use eh1_0::blocking::i2c::SevenBitAddress;
     use super::Compat;
+    use eh1_0::blocking::i2c::SevenBitAddress;
 
-    impl <T, E> eh1_0::blocking::i2c::Read<SevenBitAddress> for Compat<T>
-    where 
-    T: eh0_2::blocking::i2c::Read<Error=E>
+    impl<T, E> eh1_0::blocking::i2c::Read<SevenBitAddress> for Compat<T>
+    where
+        T: eh0_2::blocking::i2c::Read<Error = E>,
     {
         type Error = E;
 
-        fn try_read(&mut self, address: SevenBitAddress, words: &mut [u8]) -> Result<(), Self::Error> {
+        fn try_read(
+            &mut self,
+            address: SevenBitAddress,
+            words: &mut [u8],
+        ) -> Result<(), Self::Error> {
             self.inner.read(address, words)
         }
     }
 
-    impl <T, E> eh1_0::blocking::i2c::Write<SevenBitAddress> for Compat<T>
-    where 
-    T: eh0_2::blocking::i2c::Write<Error=E>
+    impl<T, E> eh1_0::blocking::i2c::Write<SevenBitAddress> for Compat<T>
+    where
+        T: eh0_2::blocking::i2c::Write<Error = E>,
     {
         type Error = E;
 
@@ -213,13 +225,17 @@ mod i2c {
         }
     }
 
-    impl <T, E> eh1_0::blocking::i2c::WriteIter<SevenBitAddress> for Compat<T>
-    where 
-    T: eh0_2::blocking::i2c::WriteIter<Error=E>
+    impl<T, E> eh1_0::blocking::i2c::WriteIter<SevenBitAddress> for Compat<T>
+    where
+        T: eh0_2::blocking::i2c::WriteIter<Error = E>,
     {
         type Error = E;
 
-        fn try_write_iter<B>(&mut self, address: SevenBitAddress, words: B) -> Result<(), Self::Error> 
+        fn try_write_iter<B>(
+            &mut self,
+            address: SevenBitAddress,
+            words: B,
+        ) -> Result<(), Self::Error>
         where
             B: IntoIterator<Item = u8>,
         {
@@ -227,24 +243,34 @@ mod i2c {
         }
     }
 
-    impl <T, E> eh1_0::blocking::i2c::WriteRead<SevenBitAddress> for Compat<T>
-    where 
-    T: eh0_2::blocking::i2c::WriteRead<Error=E>
+    impl<T, E> eh1_0::blocking::i2c::WriteRead<SevenBitAddress> for Compat<T>
+    where
+        T: eh0_2::blocking::i2c::WriteRead<Error = E>,
     {
         type Error = E;
 
-        fn try_write_read(&mut self, address: SevenBitAddress, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Self::Error> {
+        fn try_write_read(
+            &mut self,
+            address: SevenBitAddress,
+            bytes: &[u8],
+            buffer: &mut [u8],
+        ) -> Result<(), Self::Error> {
             self.inner.write_read(address, bytes, buffer)
         }
     }
 
-    impl <T, E> eh1_0::blocking::i2c::WriteIterRead<SevenBitAddress> for Compat<T>
-    where 
-    T: eh0_2::blocking::i2c::WriteIterRead<Error=E>
+    impl<T, E> eh1_0::blocking::i2c::WriteIterRead<SevenBitAddress> for Compat<T>
+    where
+        T: eh0_2::blocking::i2c::WriteIterRead<Error = E>,
     {
         type Error = E;
 
-        fn try_write_iter_read<B>(&mut self, address: SevenBitAddress, bytes: B, buffer: &mut [u8]) -> Result<(), Self::Error> 
+        fn try_write_iter_read<B>(
+            &mut self,
+            address: SevenBitAddress,
+            bytes: B,
+            buffer: &mut [u8],
+        ) -> Result<(), Self::Error>
         where
             B: IntoIterator<Item = u8>,
         {
@@ -257,9 +283,9 @@ mod i2c {
 mod serial {
     use super::Compat;
 
-    impl <T, E> eh1_0::blocking::serial::Write<u8> for Compat<T>
-    where 
-    T: eh0_2::blocking::serial::Write<u8, Error=E>
+    impl<T, E> eh1_0::blocking::serial::Write<u8> for Compat<T>
+    where
+        T: eh0_2::blocking::serial::Write<u8, Error = E>,
     {
         type Error = E;
 
